@@ -1,0 +1,87 @@
+name: "Autoencoder"
+layer {
+  name: "data"
+  type: "Python"
+  top: "data"
+  python_param {
+    module: "input"
+    layer: "dMRI"
+  }
+  include: { phase: TRAIN }
+}
+
+layer {
+  name: "data"
+  type: "Python"
+  top: "data"
+  python_param {
+    module: "input"
+    layer: "dMRI_test"
+  }
+#  include: { phase: TEST stage: "test-on-test" }
+  include: { phase: TEST}
+}
+
+layer {
+  name: "encode1"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "encode1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 800
+    weight_filler {
+      type: "gaussian"
+      std: 1
+      sparse: 10
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "decode1"
+  type: "InnerProduct"
+  bottom: "encode1"
+  top: "decode1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 1
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 96
+    weight_filler {
+      type: "gaussian"
+      std: 1
+      sparse: 1
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+
+layer {
+  name: "loss"
+#  type: "SigmoidCrossEntropyLoss"
+  type: "EuclideanLoss"
+  bottom: "decode1"
+  bottom: "data"
+  top: "cross_entropy_loss"
+  loss_weight: 1
+}
